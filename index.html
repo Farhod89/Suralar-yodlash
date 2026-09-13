@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Воқеа сураси — ёдлаш дастури</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#123028">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Воқеа сураси">
+<style>
+  :root{
+    --bg-deep:#0e1f1c;
+    --bg-panel:#123028;
+    --bg-panel-2:#16392f;
+    --gold:#c9a24b;
+    --gold-soft:#e2c17c;
+    --ink:#eef3ee;
+    --ink-dim:#a9c2b6;
+    --green-read:#4caf6a;
+    --green-glow:rgba(76,175,106,.35);
+    --line:#254a3e;
+    --danger:#c96b4b;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #1a4638 0%, transparent 60%),
+      var(--bg-deep);
+    color:var(--ink);
+    font-family:"Segoe UI","Noto Sans",system-ui,sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:18px 12px 100px;
+  }
+
+  .app{
+    width:100%;
+    max-width:760px;
+  }
+
+  /* ---------- Top status ---------- */
+  .topbar{
+    background:linear-gradient(180deg, var(--bg-panel-2), var(--bg-panel));
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:16px 18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);
+    position:sticky;
+    top:10px;
+    z-index:20;
+  }
+  .count-block{display:flex;align-items:baseline;gap:10px;}
+  .count-num{
+    font-size:2.1rem;
+    font-weight:700;
+    color:var(--gold-soft);
+    font-variant-numeric:tabular-nums;
+    text-shadow:0 0 18px rgba(226,193,124,.35);
+    transition:transform .25s ease;
+  }
+  .count-num.bump{transform:scale(1.25);}
+  .count-label{font-size:.82rem;color:var(--ink-dim);line-height:1.25;max-width:140px;}
+  .percent-block{text-align:right;}
+  .percent-num{font-size:1.3rem;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
+  .percent-label{font-size:.72rem;color:var(--ink-dim);}
+
+  .progress-track{
+    height:8px;
+    border-radius:6px;
+    background:#0b2119;
+    overflow:hidden;
+    margin-top:12px;
+    border:1px solid var(--line);
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,#2f7a52,var(--green-read));
+    transition:width .35s ease;
+  }
+
+  /* ---------- Controls ---------- */
+  .controls{
+    display:flex;
+    gap:10px;
+    margin:16px 0 14px;
+    flex-wrap:wrap;
+  }
+  button{
+    font-family:inherit;
+    font-size:.95rem;
+    border:none;
+    border-radius:12px;
+    padding:12px 16px;
+    cursor:pointer;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    transition:transform .12s ease, filter .12s ease;
+  }
+  button:active{transform:scale(.96);}
+  .btn-mic{
+    background:linear-gradient(180deg,#2f7a52,#1f5b3c);
+    color:#eafff0;
+    flex:1;
+    justify-content:center;
+    box-shadow:0 6px 16px rgba(47,122,82,.35);
+  }
+  .btn-mic.listening{
+    background:linear-gradient(180deg,#c96b4b,#a3492c);
+    box-shadow:0 0 0 0 rgba(201,107,75,.6);
+    animation:pulse 1.6s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(201,107,75,.5);}
+    70%{box-shadow:0 0 0 14px rgba(201,107,75,0);}
+    100%{box-shadow:0 0 0 0 rgba(201,107,75,0);}
+  }
+  .btn-restart{
+    background:var(--bg-panel-2);
+    color:var(--gold-soft);
+    border:1px solid var(--gold);
+  }
+  .dot{width:9px;height:9px;border-radius:50%;background:#eafff0;display:inline-block;}
+  .btn-mic.listening .dot{animation:blink 1s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+  .status-line{
+    font-size:.82rem;
+    color:var(--ink-dim);
+    text-align:center;
+    margin-bottom:10px;
+    min-height:18px;
+  }
+
+  .manual-box{
+    background:var(--bg-panel);
+    border:1px dashed var(--line);
+    border-radius:14px;
+    padding:12px 14px;
+    margin-bottom:18px;
+  }
+  .manual-label{
+    font-size:.78rem;
+    color:var(--ink-dim);
+    margin-bottom:8px;
+    line-height:1.4;
+  }
+  #manualInput{
+    width:100%;
+    resize:vertical;
+    background:#0b2119;
+    border:1px solid var(--line);
+    border-radius:10px;
+    color:var(--ink);
+    font-family:inherit;
+    font-size:1rem;
+    padding:10px 12px;
+    margin-bottom:8px;
+  }
+  #manualInput:focus{outline:1px solid var(--gold);}
+  .btn-clear{
+    background:transparent;
+    border:1px solid var(--line);
+    color:var(--ink-dim);
+    font-size:.82rem;
+    padding:8px 12px;
+  }
+
+  /* ---------- Sura text ---------- */
+  .basmala{
+    text-align:center;
+    color:var(--gold-soft);
+    font-size:1.35rem;
+    margin:6px 0 18px;
+    letter-spacing:.5px;
+  }
+
+  .sura-card{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:22px 20px 30px;
+    box-shadow:0 10px 30px rgba(0,0,0,.3);
+  }
+
+  .ayah{
+    display:inline;
+    line-height:2.5;
+    font-size:1.18rem;
+  }
+  .ayah-num{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:var(--bg-panel-2);
+    border:1px solid var(--gold);
+    color:var(--gold-soft);
+    font-size:.68rem;
+    font-weight:700;
+    margin:0 8px;
+    vertical-align:middle;
+  }
+  .word{
+    color:var(--ink);
+    padding:2px 3px;
+    border-radius:6px;
+    transition:color .25s ease, background .25s ease, text-shadow .25s ease;
+    cursor:pointer;
+  }
+  .word.read{
+    color:#c8f5d6;
+    background:rgba(76,175,106,.16);
+    text-shadow:0 0 10px var(--green-glow);
+  }
+  .word.current{
+    outline:2px solid var(--gold);
+    outline-offset:1px;
+  }
+
+  .end-mark{
+    color:var(--gold);
+    font-weight:700;
+  }
+
+  .word.dim{
+    opacity:.28;
+  }
+
+  /* ---------- Mode tabs & panels ---------- */
+  .mode-tabs{
+    display:flex;
+    gap:8px;
+    margin-top:14px;
+  }
+  .mode-tab{
+    flex:1;
+    justify-content:center;
+    background:var(--bg-panel);
+    color:var(--ink-dim);
+    border:1px solid var(--line);
+    font-size:.82rem;
+    padding:10px 6px;
+  }
+  .mode-tab.active{
+    background:var(--bg-panel-2);
+    color:var(--gold-soft);
+    border-color:var(--gold);
+  }
+  .mode-panel{
+    background:var(--bg-panel);
+    border:1px dashed var(--line);
+    border-radius:14px;
+    padding:14px;
+    margin-top:12px;
+  }
+  .mode-panel-label{
+    font-size:.85rem;
+    color:var(--ink-dim);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .mode-panel-label input{
+    width:64px;
+    padding:6px 8px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:#0b2119;
+    color:var(--ink);
+    font-family:inherit;
+    font-size:.95rem;
+  }
+  .mode-panel-info{
+    font-size:.95rem;
+    color:var(--gold-soft);
+    margin-bottom:12px;
+    font-weight:600;
+  }
+  .mode-panel .controls{margin:0;}
+
+  /* ---------- Modal ---------- */
+  .modal-backdrop{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.55);
+    display:none;
+    align-items:center;justify-content:center;
+    z-index:50;
+    padding:20px;
+  }
+  .modal-backdrop.show{display:flex;}
+  .modal{
+    background:var(--bg-panel-2);
+    border:1px solid var(--gold);
+    border-radius:16px;
+    padding:22px;
+    max-width:340px;
+    width:100%;
+    text-align:center;
+  }
+  .modal p{color:var(--ink);font-size:1rem;margin:0 0 18px;}
+  .modal-btns{display:flex;gap:10px;}
+  .modal-btns button{flex:1;justify-content:center;}
+  .btn-yes{background:var(--green-read);color:#06210f;}
+  .btn-no{background:transparent;border:1px solid var(--ink-dim);color:var(--ink);}
+
+  .toast{
+    position:fixed;
+    bottom:20px;left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--gold-soft);
+    color:#1a2e22;
+    padding:10px 18px;
+    border-radius:10px;
+    font-weight:700;
+    font-size:.95rem;
+    opacity:0;
+    transition:all .35s ease;
+    pointer-events:none;
+    z-index:60;
+    box-shadow:0 8px 20px rgba(0,0,0,.3);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .footnote{
+    text-align:center;
+    color:var(--ink-dim);
+    font-size:.75rem;
+    margin-top:16px;
+    line-height:1.5;
+    padding:0 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="count-block">
+      <div id="countNum" class="count-num">0</div>
+      <div id="countLabel" class="count-label">марта ўқидингиз</div>
+    </div>
+    <div class="percent-block">
+      <div id="percentNum" class="percent-num">0%</div>
+      <div class="percent-label">ушбу ўқишда</div>
+    </div>
+  </div>
+  <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+
+  <div class="mode-tabs">
+    <button class="mode-tab" data-mode="free">Эркин ўқиш</button>
+    <button class="mode-tab" data-mode="daily">Кунлик режа</button>
+    <button class="mode-tab" data-mode="incremental">Оятма-оят</button>
+  </div>
+
+  <div id="dailyPanel" class="mode-panel" style="display:none;">
+    <div class="mode-panel-label">Кунига неча оят: <input type="number" id="dailySizeInput" min="1" max="96" value="10"></div>
+    <div id="dailyRangeLabel" class="mode-panel-info"></div>
+    <div class="controls">
+      <button id="dailyNextBtn" class="btn-restart">Кун тугади → кейинги қисм</button>
+    </div>
+  </div>
+
+  <div id="incrementalPanel" class="mode-panel" style="display:none;">
+    <div id="incrRangeLabel" class="mode-panel-info"></div>
+    <div class="controls">
+      <button id="incrAddBtn" class="btn-restart">+ Кейинги оятни қўшиш</button>
+      <button id="incrRemoveBtn" class="btn-restart">− Охиргисини олиб ташлаш</button>
+    </div>
+  </div>
+
+  <div class="controls" style="margin-top:16px;">
+    <button id="micBtn" class="btn-mic"><span class="dot"></span><span id="micLabel">Тинглашни бошлаш</span></button>
+    <button id="restartBtn" class="btn-restart">↺ Бошидан бошлаш</button>
+  </div>
+  <div id="statusLine" class="status-line">Тинглашни бошлаш учун тугмани босинг</div>
+
+  <div class="manual-box">
+    <div class="manual-label">Микрофон ишламаса — ўқиганингизни шу ерга ёзинг ёки телефон клавиатурасидаги 🎤 диктант тугмасидан фойдаланинг:</div>
+    <textarea id="manualInput" rows="2" placeholder="Бу ерга гапиринг ёки ёзинг..."></textarea>
+    <button id="manualClear" class="btn-clear">Майдонни тозалаш</button>
+  </div>
+
+  <div class="basmala">بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيمِ</div>
+  <div class="basmala" style="font-size:1rem;color:var(--ink-dim);margin-top:-14px;">Бисмиллаҳир Роҳманир Роҳийм</div>
+
+  <div class="sura-card">
+    <div id="suraText" class="ayah"></div>
+  </div>
+
+  <div class="footnote">
+    Матн — сиз берган талаффуз бўйича жойлаштирилди. Сичқонча (ёки телефонда бармоқ) ўқиётган сатрингиз бўйлаб сўзлар устидан юрса, ўша сўзгача бўлган қисм ўзи яшилга ўтади. Сўзни тузатмоқчи бўлсангиз, устига икки марта босинг.
+  </div>
+</div>
+
+<div id="modalBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <p>Ҳисобни (марта сонини) ҳам бошидан бошлайми?</p>
+    <div class="modal-btns">
+      <button class="btn-yes" id="modalYes">Ҳа</button>
+      <button class="btn-no" id="modalNo">Йўқ</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const SURA = {"ayahs": [["Иза", "вақаъатил", "вақиъаҳ"], ["Лайса", "ливақъатиҳа", "казибаҳ"], ["Хофизотур", "рофиъаҳ"], ["Иза", "ружжатил", "арзу", "рожжа"], ["Ва", "буссатил", "жибалу", "басса"], ["Фа", "канат", "ҳаба’ам", "мумбасса"], ["Ва", "кунтум", "азважан", "саласаҳ"], ["Фа", "асҳабул", "майманати", "маа", "асҳабул", "майманаҳ"], ["Ва", "асҳабул", "маш’амати", "ма", "асҳабул", "маш’амаҳ"], ["Вас", "сабиқунас", "сабиқун"], ["Ула’икал", "муқорробун"], ["Фи", "жаннатин", "наъийм"], ["Суллатум", "минал", "аввалийн"], ["Ва", "қолийлум", "минал", "ахирийн"], ["Ъала", "сурурим", "мавзунаҳ"], ["Муттаки’ийна", "ъалайҳа", "мутақобилийн"], ["Ятуфу", "ъалайҳим", "вилданум", "мухолладун"], ["Би’аквабив", "ва", "абарийқо", "ва", "ка’сим", "мим", "маъийн"], ["Ла", "юсаддаъуна", "ъанҳа", "вала", "юнзифун"], ["Ва", "факиҳатим", "мимма", "ятахойярун"], ["Ва", "лаҳми", "тойрим", "мимма", "яштаҳун"], ["Ва", "ҳурун", "ъийн"], ["Ка’амсалил", "лу’лу’ил", "макнун"], ["Жаза’ам", "бима", "кану", "яъмалун"], ["Ла", "ясмаъуна", "фийҳа", "лағвав", "ва", "ла", "та’сийма"], ["Илла", "қийлан", "саламан", "салама"], ["Ва", "асҳабул", "ямийни", "ма", "асҳабул", "ямийн"], ["Фи", "сидрим", "махзуд"], ["Ва", "толҳим", "манзуд"], ["Ва", "зиллин", "мамдуд"], ["Ва", "ма’ин", "маскуб"], ["Ва", "факиҳатин", "касийроҳ"], ["Ла", "мақтуъатив", "ва", "ла", "мамнуъаҳ"], ["Ва", "фурушим", "марфуъаҳ"], ["Иннаа", "анша’наҳунна", "инша’а"], ["Фажаъалнаҳунна", "абкаро"], ["Ъурубан", "атроба"], ["Лиасҳабил", "ямийн"], ["Суллатум", "минал", "аввалийна"], ["Ва", "суллатум", "минал", "ахирийн"], ["Ва", "асҳабуш", "шимали", "ма", "асҳабуш", "шимал"], ["Фи", "самумив", "ва", "ҳамийм"], ["Ва", "зиллим", "мий", "яҳмум"], ["Ла", "баридив", "ва", "ла", "карийм"], ["Иннаҳум", "кану", "қобла", "залика", "мутрофийн"], ["Ва", "кану", "юсирруна", "ъалал", "ҳинсил", "ъазийм"], ["Ва", "кану", "яқулуна", "а’иза", "митна", "ва", "кунна", "туробав", "ва", "ъизоман", "а’инна", "ламабъусун"], ["Ава", "аба’унал", "аввалун"], ["Қул", "иннал", "аввалина", "вал", "ахирийн"], ["Ламажмуъуна", "ила", "мийқоти", "явмим", "маълум"], ["Сумма", "иннакум", "айюҳаз", "зооллунал", "муказзибун"], ["Ла’акилуна", "мин", "шажарим", "мин", "заққум"], ["Фа", "мали’уна", "минҳал", "бутун"], ["Фа", "шарибуна", "ъалайҳи", "минал", "ҳамийм"], ["Фа", "шарибуна", "шурбал", "ҳийм"], ["Ҳаза", "нузулуҳум", "явмад", "дийн"], ["Наҳну", "холақнакум", "фалавла", "тусоддиқун"], ["Афаро’айтум", "ма", "тумнун"], ["А’антум", "тахлуқунаҳу", "ам", "наҳнул", "холиқун"], ["Наҳну", "қоддарна", "байнакумул", "мавта", "ва", "ма", "наҳну", "бимасбуқийн"], ["Ъала", "ан", "нубаддила", "амсалакум", "ва", "нунши’акум", "фи", "мала", "таъламун"], ["Ва", "лақод", "ъалимтумун", "наш’атал", "уула", "фалавла", "тазакка", "рун"], ["Афа", "ро’айтум", "ма", "таҳрусун"], ["А’антум", "тазроъунаҳу", "ам", "наҳнуз", "зариъун"], ["Лав", "нашаа’у", "лажаъалнаҳу", "ҳутомав", "фазолтум", "тафаккаҳун"], ["Инна", "ламуғромун"], ["Бал", "наҳну", "маҳрумун"], ["Афаро’айтумул", "ма’аллазий", "ташробун"], ["А’антум", "анзалтумуҳу", "минал", "музни", "ам", "наҳнул", "мунзилун"], ["Лав", "наша’у", "жаъалнаҳу", "ужажав", "фалавла", "таш", "курун"], ["Афаро’айтумун", "нарол-латий", "турун"], ["А", "антум", "анша’тум", "шажаротаҳа", "ам", "наҳнул", "мунши’ун"], ["Наҳну", "жаъалнаҳа", "тазкиротав", "ва", "матаъал", "лил", "муқвин"], ["Фасаббиҳ", "бисми", "Роббикал", "ъазийм"], ["Фала", "уқсиму", "бимаваақиъин", "нужум"], ["Ва", "иннаҳу", "лақосамул", "лав", "таъламуна", "аъзийм"], ["Иннаҳу", "лақур’анун", "карийм"], ["Фий", "китабим", "макнун"], ["Ла", "ямассуҳу", "иллал", "мутоҳҳарун"], ["Танзийлум", "мир", "роббил", "аъламийн"], ["Афа", "биҳазал", "ҳадийси", "антум", "мудҳинун"], ["Ва", "тажъалуна", "ризқокум", "аннакум", "туказзибун"], ["Фалавлаа", "иза", "балағотил", "ҳулқум"], ["Ва", "антум", "ҳийна’изин", "танзурун"], ["Ва", "наҳну", "ақробу", "илайҳи", "минкум", "ва", "лакил", "ла", "тубсирун"], ["Фалавлаа", "ин", "кунтум", "ғойро", "мадинин"], ["Таржиъунаҳа", "ин", "кунтум", "содиқийн"], ["Фа", "аммаа", "ин", "кана", "минал", "муқорробийн"], ["Фаровҳув", "ва", "ройҳанув", "ва", "жаннату", "наъийм"], ["Ва", "аммаа", "ин", "кана", "мин", "асҳабил", "ямийн"], ["Фасаламул", "лака", "мин", "асҳабил", "ямийн"], ["Ва", "аммаа", "ин", "кана", "минал", "муказзи", "бийназ", "зооллийн"], ["Фанузулум", "мин", "ҳамийм"], ["Ва", "таслияту", "жаҳийм"], ["Инна", "ҳаза", "лаҳува", "ҳаққул", "яқийн"], ["Фа", "саббиҳ", "бисми", "роббикал", "аъзийм"]], "total_words": 433};
+
+const totalWords = SURA.total_words;
+let flatWords = [];
+let ayahWordStart = []; // ayahWordStart[i] = flat index of first word of ayah i (0-based); [96] = totalWords
+let currentIndex = 0;
+let activeStart = 0, activeEnd = totalWords;
+
+let mode = 'free'; // 'free' | 'daily' | 'incremental'
+let readCount = 0;          // free mode: full-sura completions (хатм)
+let dailySize = 10;
+let dailyStartAyah = 0;
+let dailyRepeat = 0;
+let incrLastAyah = 0;
+let incrRepeat = 0;
+
+let recognizing = false;
+let recognition = null;
+let hoverTrackingEnabled = true;
+
+const suraTextEl = document.getElementById('suraText');
+const countNumEl = document.getElementById('countNum');
+const countLabelEl = document.getElementById('countLabel');
+const percentNumEl = document.getElementById('percentNum');
+const progressFillEl = document.getElementById('progressFill');
+const micBtn = document.getElementById('micBtn');
+const micLabel = document.getElementById('micLabel');
+const restartBtn = document.getElementById('restartBtn');
+const statusLine = document.getElementById('statusLine');
+const modalBackdrop = document.getElementById('modalBackdrop');
+const modalYes = document.getElementById('modalYes');
+const modalNo = document.getElementById('modalNo');
+const toastEl = document.getElementById('toast');
+const modeTabs = Array.from(document.querySelectorAll('.mode-tab'));
+const dailyPanel = document.getElementById('dailyPanel');
+const incrementalPanel = document.getElementById('incrementalPanel');
+const dailySizeInput = document.getElementById('dailySizeInput');
+const dailyRangeLabel = document.getElementById('dailyRangeLabel');
+const dailyNextBtn = document.getElementById('dailyNextBtn');
+const incrRangeLabel = document.getElementById('incrRangeLabel');
+const incrAddBtn = document.getElementById('incrAddBtn');
+const incrRemoveBtn = document.getElementById('incrRemoveBtn');
+
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>toastEl.classList.remove('show'), 2200);
+}
+
+function buildSuraDom(){
+  const frag = document.createDocumentFragment();
+  SURA.ayahs.forEach((words, ayahIdx)=>{
+    ayahWordStart[ayahIdx] = flatWords.length;
+    words.forEach((w)=>{
+      const span = document.createElement('span');
+      span.className = 'word';
+      span.textContent = w;
+      span.addEventListener('mouseenter', ()=>{
+        if(hoverTrackingEnabled){
+          const idx = flatWords.indexOf(span);
+          setCurrentIndex(idx + 1);
+        }
+      });
+      span.addEventListener('dblclick', (e)=>{
+        e.stopPropagation();
+        const val = prompt('Сўзни таҳрирлаш:', span.textContent);
+        if(val !== null && val.trim() !== ''){
+          span.textContent = val.trim();
+        }
+      });
+      flatWords.push(span);
+      frag.appendChild(span);
+      frag.appendChild(document.createTextNode(' '));
+    });
+    const num = document.createElement('span');
+    num.className = 'ayah-num';
+    num.textContent = (ayahIdx+1);
+    frag.appendChild(num);
+  });
+  ayahWordStart[96] = flatWords.length;
+  suraTextEl.appendChild(frag);
+}
+buildSuraDom();
+
+// Telefon/planshetda barmoqni so'zlar ustida yurgizganda ham yashilga o'tkazish
+suraTextEl.addEventListener('touchmove', (e)=>{
+  if(!hoverTrackingEnabled) return;
+  const touch = e.touches[0];
+  if(!touch) return;
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  if(el && el.classList && el.classList.contains('word')){
+    const idx = flatWords.indexOf(el);
+    if(idx >= 0) setCurrentIndex(idx + 1);
+  }
+}, {passive:true});
+
+function updateHighlight(){
+  for(let i=0;i<flatWords.length;i++){
+    const inRange = i >= activeStart && i < activeEnd;
+    flatWords[i].classList.toggle('read', i < currentIndex && i >= activeStart);
+    flatWords[i].classList.toggle('current', i === currentIndex);
+    flatWords[i].classList.toggle('dim', !inRange);
+  }
+  const totalActive = Math.max(activeEnd - activeStart, 1);
+  const pct = Math.round(((currentIndex - activeStart) / totalActive) * 100);
+  percentNumEl.textContent = pct + '%';
+  progressFillEl.style.width = pct + '%';
+
+  const cur = flatWords[Math.min(currentIndex, flatWords.length-1)];
+  if(cur){
+    const rect = cur.getBoundingClientRect();
+    if(rect.top < 90 || rect.bottom > window.innerHeight - 40){
+      cur.scrollIntoView({block:'center', behavior:'smooth'});
+    }
+  }
+}
+
+function bumpCount(){
+  countNumEl.classList.add('bump');
+  setTimeout(()=>countNumEl.classList.remove('bump'), 260);
+}
+
+function advance(byWords){
+  if(byWords <= 0) return;
+  setCurrentIndex(currentIndex + byWords);
+}
+
+function setCurrentIndex(newIndex){
+  newIndex = Math.min(newIndex, activeEnd);
+  if(newIndex <= currentIndex) return; // faqat oldinga siljiydi
+  currentIndex = newIndex;
+  if(currentIndex >= activeEnd){
+    currentIndex = activeEnd;
+    updateHighlight();
+    completeCurrentRange();
+  } else {
+    updateHighlight();
+  }
+}
+
+function completeCurrentRange(){
+  if(mode === 'free'){
+    readCount += 1;
+    persist('voqea_read_count', readCount);
+    updateTopbarForMode();
+    bumpCount();
+    showToast('Хатм муборак бўлсин! Сиз ' + readCount + '-марта ўқидингиз ✅');
+  } else if(mode === 'daily'){
+    dailyRepeat += 1;
+    persist('voqea_daily_repeat', dailyRepeat);
+    updateTopbarForMode();
+    bumpCount();
+    showToast('Баракалла! Бугунги қисмни ' + dailyRepeat + '-марта такрорладингиз ✅');
+  } else {
+    incrRepeat += 1;
+    persist('voqea_incr_repeat', incrRepeat);
+    updateTopbarForMode();
+    bumpCount();
+    showToast('Аъло! Ушбу босқични ' + incrRepeat + '-марта ўқидингиз ✅');
+  }
+  setTimeout(()=>{
+    currentIndex = activeStart;
+    updateHighlight();
+    if(typeof manualInput !== 'undefined' && manualInput){ manualInput.value = ''; lastManualWordCount = 0; }
+  }, 900);
+}
+
+/* ---------------- Mode management ---------------- */
+function computeActiveRange(){
+  if(mode === 'daily'){
+    const endAyah = Math.min(dailyStartAyah + dailySize, 96);
+    return [ayahWordStart[dailyStartAyah], ayahWordStart[endAyah]];
+  } else if(mode === 'incremental'){
+    const endAyah = incrLastAyah + 1;
+    return [0, ayahWordStart[endAyah]];
+  }
+  return [0, totalWords];
+}
+
+function updateTopbarForMode(){
+  if(mode === 'daily'){
+    countNumEl.textContent = dailyRepeat;
+    countLabelEl.textContent = 'марта такрорладингиз (шу кунги қисм)';
+  } else if(mode === 'incremental'){
+    countNumEl.textContent = incrRepeat;
+    countLabelEl.textContent = 'марта такрорладингиз (шу босқич)';
+  } else {
+    countNumEl.textContent = readCount;
+    countLabelEl.textContent = 'марта ўқидингиз (хатм)';
+  }
+}
+
+function updateModePanels(){
+  modeTabs.forEach(btn=>btn.classList.toggle('active', btn.dataset.mode === mode));
+  dailyPanel.style.display = (mode === 'daily') ? 'block' : 'none';
+  incrementalPanel.style.display = (mode === 'incremental') ? 'block' : 'none';
+  if(mode === 'daily'){
+    const endAyah = Math.min(dailyStartAyah + dailySize, 96);
+    dailyRangeLabel.textContent = 'Бугунги қисм: ' + (dailyStartAyah+1) + '—' + endAyah + '-оятлар';
+  }
+  if(mode === 'incremental'){
+    incrRangeLabel.textContent = 'Ҳозирги қўшилган қисм: 1—' + (incrLastAyah+1) + (incrLastAyah===0 ? '-оят' : '-оятлар');
+  }
+}
+
+function applyMode(){
+  const range = computeActiveRange();
+  activeStart = range[0];
+  activeEnd = range[1];
+  currentIndex = activeStart;
+  updateModePanels();
+  updateTopbarForMode();
+  updateHighlight();
+}
+
+modeTabs.forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    mode = btn.dataset.mode;
+    persist('voqea_mode', mode);
+    applyMode();
+  });
+});
+
+dailySizeInput.addEventListener('change', ()=>{
+  let v = parseInt(dailySizeInput.value, 10);
+  if(isNaN(v) || v < 1) v = 1;
+  if(v > 96) v = 96;
+  dailySizeInput.value = v;
+  dailySize = v;
+  dailyRepeat = 0;
+  persist('voqea_daily_size', dailySize);
+  persist('voqea_daily_repeat', 0);
+  applyMode();
+});
+
+dailyNextBtn.addEventListener('click', ()=>{
+  dailyStartAyah = (dailyStartAyah + dailySize) % 96;
+  dailyRepeat = 0;
+  persist('voqea_daily_start', dailyStartAyah);
+  persist('voqea_daily_repeat', 0);
+  applyMode();
+  showToast('Кейинги кунлик қисмга ўтдингиз.');
+});
+
+incrAddBtn.addEventListener('click', ()=>{
+  if(incrLastAyah < 95){
+    incrLastAyah += 1;
+    incrRepeat = 0;
+    persist('voqea_incr_last', incrLastAyah);
+    persist('voqea_incr_repeat', 0);
+    applyMode();
+    showToast((incrLastAyah+1) + '-оят қўшилди.');
+  } else {
+    showToast('Барча оятлар аллақачон қўшилган — сура тугади.');
+  }
+});
+
+incrRemoveBtn.addEventListener('click', ()=>{
+  if(incrLastAyah > 0){
+    incrLastAyah -= 1;
+    incrRepeat = 0;
+    persist('voqea_incr_last', incrLastAyah);
+    persist('voqea_incr_repeat', 0);
+    applyMode();
+    showToast('Охирги оят олиб ташланди.');
+  }
+});
+
+/* ---------------- Persistent storage ---------------- */
+async function persist(key, value){
+  try{
+    if(window.storage && window.storage.set){
+      await window.storage.set(key, String(value));
+    }
+  }catch(e){ /* storage may be unavailable - fine, keep going in-session */ }
+}
+async function loadVal(key, fallback){
+  try{
+    if(window.storage && window.storage.get){
+      const r = await window.storage.get(key);
+      if(r && r.value !== undefined && r.value !== null) return r.value;
+    }
+  }catch(e){ /* no persisted value yet */ }
+  return fallback;
+}
+
+async function initState(){
+  readCount = parseInt(await loadVal('voqea_read_count', '0'), 10) || 0;
+  mode = await loadVal('voqea_mode', 'free');
+  dailySize = parseInt(await loadVal('voqea_daily_size', '10'), 10) || 10;
+  dailyStartAyah = parseInt(await loadVal('voqea_daily_start', '0'), 10) || 0;
+  dailyRepeat = parseInt(await loadVal('voqea_daily_repeat', '0'), 10) || 0;
+  incrLastAyah = parseInt(await loadVal('voqea_incr_last', '0'), 10) || 0;
+  incrRepeat = parseInt(await loadVal('voqea_incr_repeat', '0'), 10) || 0;
+
+  dailySizeInput.value = dailySize;
+  applyMode();
+}
+initState();
+
+/* ---------------- Speech recognition ---------------- */
+const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+function countArabicWords(text){
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function setupRecognition(){
+  if(!SpeechRecognitionCtor){
+    statusLine.textContent = 'Бу браузерда овозни таниш мавжуд эмас. Сўзга қўлда босиб ўзингиз белгилашингиз мумкин.';
+    micBtn.disabled = true;
+    micBtn.style.opacity = .5;
+    return;
+  }
+  recognition = new SpeechRecognitionCtor();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'ar-SA';
+
+  let lastInterimWordCount = 0;
+
+  recognition.onresult = (event)=>{
+    for(let i = event.resultIndex; i < event.results.length; i++){
+      const result = event.results[i];
+      const transcript = result[0].transcript || '';
+      const wc = countArabicWords(transcript);
+      if(result.isFinal){
+        const delta = Math.max(wc - lastInterimWordCount, 1);
+        advance(delta);
+        lastInterimWordCount = 0;
+      } else {
+        // interim: advance only the newly-added words compared to last interim reading
+        const delta = wc - lastInterimWordCount;
+        if(delta > 0){
+          advance(delta);
+          lastInterimWordCount = wc;
+        }
+      }
+    }
+  };
+
+  recognition.onerror = (e)=>{
+    statusLine.textContent = 'Хатолик: ' + e.error + '. Микрофонга рухсат берилганини текширинг.';
+  };
+
+  recognition.onend = ()=>{
+    if(recognizing){
+      // browsers auto-stop after a silence; restart seamlessly if user hasn't pressed stop
+      try{ recognition.start(); }catch(e){}
+    }
+  };
+}
+setupRecognition();
+
+micBtn.addEventListener('click', ()=>{
+  if(!recognition) return;
+  if(!recognizing){
+    try{
+      recognition.start();
+      recognizing = true;
+      micBtn.classList.add('listening');
+      micLabel.textContent = 'Тинглаш тўхтатиш';
+      statusLine.textContent = 'Тингланмоқда... ўқишингизни давом эттиринг.';
+    }catch(e){
+      statusLine.textContent = 'Микрофонни ёқиб бўлмади: ' + e.message;
+    }
+  } else {
+    recognizing = false;
+    try{ recognition.stop(); }catch(e){}
+    micBtn.classList.remove('listening');
+    micLabel.textContent = 'Тинглашни бошлаш';
+    statusLine.textContent = 'Тўхтатилди.';
+  }
+});
+
+/* ---------------- Manual text fallback (typing or phone-keyboard dictation) ---------------- */
+const manualInput = document.getElementById('manualInput');
+const manualClear = document.getElementById('manualClear');
+let lastManualWordCount = 0;
+
+manualInput.addEventListener('input', ()=>{
+  const wc = countArabicWords(manualInput.value);
+  const delta = wc - lastManualWordCount;
+  if(delta > 0){
+    advance(delta);
+    lastManualWordCount = wc;
+  } else if(delta < 0){
+    // user deleted text - just resync the baseline, don't move highlight backward
+    lastManualWordCount = wc;
+  }
+});
+
+manualClear.addEventListener('click', ()=>{
+  manualInput.value = '';
+  lastManualWordCount = 0;
+  manualInput.focus();
+});
+
+/* ---------------- Restart ---------------- */
+restartBtn.addEventListener('click', ()=>{
+  currentIndex = activeStart;
+  updateHighlight();
+  modalBackdrop.classList.add('show');
+});
+modalYes.addEventListener('click', ()=>{
+  if(mode === 'daily'){ dailyRepeat = 0; persist('voqea_daily_repeat', 0); }
+  else if(mode === 'incremental'){ incrRepeat = 0; persist('voqea_incr_repeat', 0); }
+  else { readCount = 0; persist('voqea_read_count', 0); }
+  updateTopbarForMode();
+  modalBackdrop.classList.remove('show');
+  showToast('Ҳисоб ҳам бошидан бошланди.');
+});
+modalNo.addEventListener('click', ()=>{
+  modalBackdrop.classList.remove('show');
+  showToast('Бошидан, ҳисоб эса давом этади.');
+});
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('service-worker.js').catch(()=>{ /* file:// da ishlamasligi mumkin */ });
+  });
+}
+
+
+</script>
+</body>
+</html>
