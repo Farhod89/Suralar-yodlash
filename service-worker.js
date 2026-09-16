@@ -1,4 +1,4 @@
-const CACHE_NAME = 'voqea-app-v1';
+const CACHE_NAME = 'suralar-yodlash-v1';
 const ASSETS = [
   './',
   './index.html',
@@ -26,13 +26,13 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((resp) => {
-        return caches.open(CACHE_NAME).then((cache) => {
-          if (event.request.method === 'GET' && resp.status === 200) {
-            cache.put(event.request, resp.clone());
-          }
-          return resp;
-        });
+      return cached || fetch(event.request).then((response) => {
+        // faqat GET so'rovlarini keshga saqlaymiz
+        if (event.request.method === 'GET' && response && response.status === 200) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
       }).catch(() => cached);
     })
   );
