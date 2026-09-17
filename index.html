@@ -73,6 +73,68 @@
   .sura-card .sinfo{font-size:.75rem;color:var(--ink-dim);margin-top:4px;}
   .sura-card .sdone{font-size:.72rem;color:var(--gold-soft);margin-top:6px;}
 
+  .menu-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px;
+  }
+  .menu-card{
+    background:linear-gradient(180deg, var(--bg-panel-2), var(--bg-panel));
+    border:1px solid var(--line);border-radius:18px;
+    padding:26px 14px;text-align:center;cursor:pointer;
+    transition:transform .12s ease, border-color .12s ease;
+  }
+  .menu-card:hover{border-color:var(--gold);transform:translateY(-2px);}
+  .menu-icon{font-size:2.2rem;margin-bottom:8px;}
+  .menu-card .sname{font-size:1.1rem;font-weight:700;}
+  .menu-card .sinfo{font-size:.78rem;color:var(--ink-dim);margin-top:4px;}
+
+  /* ---------- Tasbih (salovot) ---------- */
+  .tasbih-wrap{
+    background:linear-gradient(180deg, var(--bg-panel-2), var(--bg-panel));
+    border:1px solid var(--line);border-radius:22px;
+    padding:26px 18px 30px;text-align:center;
+    box-shadow:0 10px 30px rgba(0,0,0,.3);
+    user-select:none;
+  }
+  .tasbih-arabic{font-size:1.6rem;color:var(--gold-soft);margin-bottom:8px;line-height:1.6;}
+  .tasbih-cyr{font-size:1.15rem;color:var(--ink-dim);margin-bottom:22px;}
+  .tasbih-btn{
+    width:100%;
+    background:radial-gradient(circle at 50% 30%, #2f7a52, #17402a);
+    color:#eafff0;
+    border:2px solid var(--gold);
+    border-radius:50%;
+    aspect-ratio:1/1;
+    max-width:230px;
+    margin:0 auto 20px;
+    font-size:1.05rem;
+    font-weight:700;
+    display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;
+    box-shadow:0 10px 26px rgba(47,122,82,.4);
+    cursor:pointer;
+  }
+  .tasbih-btn:active{transform:scale(.96);}
+  .tasbih-count-big{font-size:2.4rem;font-variant-numeric:tabular-nums;}
+  .tasbih-stats{
+    display:flex;justify-content:center;gap:22px;margin-bottom:16px;font-size:.92rem;color:var(--ink-dim);
+  }
+  .tasbih-stats b{color:var(--ink);font-size:1.05rem;}
+  .tasbih-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+  .tasbih-actions button{font-size:.82rem;padding:9px 14px;}
+  .btn-minus{background:var(--bg-panel-2);color:var(--ink-dim);border:1px solid var(--line);}
+  .btn-target{background:transparent;color:var(--gold-soft);border:1px solid var(--gold);}
+  .btn-reset-tasbih{background:transparent;color:var(--danger);border:1px solid var(--danger);}
+
+  .target-modal .presets{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:14px 0;}
+  .target-modal .presets button{
+    background:var(--bg-panel);color:var(--ink);border:1px solid var(--line);
+    padding:8px 14px;font-size:.85rem;
+  }
+  .target-modal .presets button.sel{border-color:var(--gold);color:var(--gold-soft);}
+  .target-modal input[type=number]{
+    width:140px;background:#0b2119;border:1px solid var(--line);color:var(--ink);
+    border-radius:10px;padding:10px 12px;font-size:1.1rem;text-align:center;margin-bottom:14px;
+  }
+
   /* ---------- Top status ---------- */
   .backbar{
     display:flex;align-items:center;gap:10px;
@@ -275,6 +337,23 @@
 </div>
 <div id="toast" class="toast"></div>
 
+<div id="targetModalBackdrop" class="modal-backdrop">
+  <div class="modal target-modal">
+    <p id="targetModalTitle">Нечта айтмоқчисиз?</p>
+    <div class="presets" id="targetPresets">
+      <button data-v="33">33</button>
+      <button data-v="100">100</button>
+      <button data-v="1000">1000</button>
+      <button data-v="40000">40000</button>
+    </div>
+    <input type="number" id="targetInput" min="1" placeholder="Ёки ўзингиз киритинг">
+    <div class="modal-btns">
+      <button class="btn-yes" id="targetStartBtn">Бошлаш</button>
+      <button class="btn-no" id="targetCancelBtn">Бекор қилиш</button>
+    </div>
+  </div>
+</div>
+
 <script>
 /* ================= SURA MA'LUMOTLARI ================= */
 /* Har bir so'z tabiiy talaffuz (vasl) birligi sifatida yozilgan — Voqea surasi
@@ -354,8 +433,24 @@ const SURAS = {
 };
 const SURA_ORDER = Object.keys(SURAS).sort((a,b)=>SURAS[a].order-SURAS[b].order);
 
+/* ================= SALOVOTLAR (TASBIH) MA'LUMOTLARI ================= */
+const SALOVOTLAR = {
+  astagfirullah: { name:"Астағфируллоҳ", arabic:"أَسْتَغْفِرُ اللّٰهَ" },
+  subhanalloh: { name:"Субҳаналлоҳ", arabic:"سُبْحَانَ اللّٰهِ" },
+  alhamdulillah: { name:"Алҳамдулиллаҳ", arabic:"اَلْحَمْدُ لِلّٰهِ" },
+  allohuakbar: { name:"Аллоҳу акбар", arabic:"اَللّٰهُ أَكْبَرُ" },
+  lailaha: { name:"Ла илаҳа иллаллоҳ", arabic:"لَا إِلٰهَ إِلَّا اللّٰهُ" },
+  lahavla: { name:"Ла ҳавла ва ла қуввата иллаа биллаҳ", arabic:"لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللّٰهِ" },
+  salovot: { name:"Аллоҳумма салли ъала Муҳаммад", arabic:"اَللّٰهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ" },
+  subhanwabihamdi: { name:"Субҳаналлоҳи ва биҳамдиҳи", arabic:"سُبْحَانَ اللّٰهِ وَبِحَمْدِهِ" },
+  hasbunalloh: { name:"Ҳасбуналлоҳу ва ниъмал вакийл", arabic:"حَسْبُنَا اللّٰهُ وَنِعْمَ الْوَكِيلُ" },
+  tahlil: { name:"Ла илаҳа иллаллоҳу ваҳдаҳу ла шарийка лаҳ", arabic:"لَا إِلٰهَ إِلَّا اللّٰهُ وَحْدَهُ لَا شَرِيكَ لَهُ" }
+};
+const SALOVOT_ORDER = Object.keys(SALOVOTLAR);
+
 /* ================= HOLAT (STATE) ================= */
 let activeSuraId = null;
+let activeSalovotId = null;
 let activeMode = 'free'; // free | daily | incr
 let flatWords = [];
 let currentIndex = 0;
@@ -388,12 +483,41 @@ function countKey(id){ return 'voqea10_count_'+id; }
 function dailyQuotaKey(id){ return 'voqea10_dailyquota_'+id; }
 function dailyDayKey(id){ return 'voqea10_dailyday_'+id; }
 function incrKey(id){ return 'voqea10_incr_'+id; }
+function salovotTargetKey(id){ return 'voqea10_sal_target_'+id; }
+function salovotCountKey(id){ return 'voqea10_sal_count_'+id; }
+function salovotCyclesKey(id){ return 'voqea10_sal_cycles_'+id; }
+
+/* ================= ENG BOSH MENYU ================= */
+function renderMainMenu(){
+  activeSuraId = null; activeSalovotId = null;
+  appEl.innerHTML = `
+    <div class="home-title">🕌 Диний амалиётлар дастури</div>
+    <div class="home-sub">Бўлимни танланг</div>
+    <div class="menu-grid">
+      <div class="menu-card" id="goSuralar">
+        <div class="menu-icon">📖</div>
+        <div class="sname">Суралар</div>
+        <div class="sinfo">Ёдлаш ва такрорлаш</div>
+      </div>
+      <div class="menu-card" id="goSalovotlar">
+        <div class="menu-icon">📿</div>
+        <div class="sname">Саловотлар</div>
+        <div class="sinfo">Рақамли тасбеҳ</div>
+      </div>
+    </div>
+  `;
+  document.getElementById('goSuralar').addEventListener('click', renderSuraHome);
+  document.getElementById('goSalovotlar').addEventListener('click', renderSalovotMenu);
+}
 
 /* ================= BOSH SAҲИФА (SURA TANLASH) ================= */
-function renderHome(){
+function renderSuraHome(){
   activeSuraId = null;
   stopRecognitionIfAny();
   let html = `
+    <div class="backbar">
+      <button class="btn-back" id="btnMainMenu">← Бош меню</button>
+    </div>
     <div class="home-title">📖 Қисқа суралар — ёдлаш дастури</div>
     <div class="home-sub">Ёдлайдиган сурани танланг</div>
     <div class="sura-grid">`;
@@ -408,12 +532,154 @@ function renderHome(){
   });
   html += `</div>`;
   appEl.innerHTML = html;
+  document.getElementById('btnMainMenu').addEventListener('click', renderMainMenu);
   appEl.querySelectorAll('.sura-card').forEach(card=>{
     card.addEventListener('click', ()=> openSura(card.dataset.id));
   });
 }
 
 /* ================= ЎҚИШ САҲИФАСИ ================= */
+/* ================= SALOVOTLAR (TASBIH) EKRANLARI ================= */
+function renderSalovotMenu(){
+  activeSalovotId = null;
+  let html = `
+    <div class="backbar">
+      <button class="btn-back" id="btnMainMenu2">← Бош меню</button>
+    </div>
+    <div class="home-title">📿 Саловотлар — рақамли тасбеҳ</div>
+    <div class="home-sub">Айтмоқчи бўлган саловот/зикрни танланг</div>
+    <div class="sura-grid">`;
+  SALOVOT_ORDER.forEach(id=>{
+    const s = SALOVOTLAR[id];
+    const cycles = lsGet(salovotCyclesKey(id), '0');
+    const target = lsGet(salovotTargetKey(id), '');
+    const count = parseInt(lsGet(salovotCountKey(id), '0'), 10);
+    const inProgress = target && count>0 && count < parseInt(target,10);
+    html += `<div class="sura-card" data-id="${id}">
+      <div class="sname">${s.name}</div>
+      <div class="sinfo">${inProgress ? ('Давом этмоқда: '+count+'/'+target) : 'Босиб бошланг'}</div>
+      <div class="sdone">${cycles} марта тўлиқ якунланган</div>
+    </div>`;
+  });
+  html += `</div>`;
+  appEl.innerHTML = html;
+  document.getElementById('btnMainMenu2').addEventListener('click', renderMainMenu);
+  appEl.querySelectorAll('.sura-card').forEach(card=>{
+    card.addEventListener('click', ()=> openSalovot(card.dataset.id));
+  });
+}
+
+function openSalovot(id){
+  const target = parseInt(lsGet(salovotTargetKey(id), '0'), 10);
+  const count = parseInt(lsGet(salovotCountKey(id), '0'), 10);
+  if(target > 0 && count < target){
+    activeSalovotId = id;
+    renderSalovotCounter();
+  } else {
+    showTargetModal(id);
+  }
+}
+
+function showTargetModal(id){
+  activeSalovotId = id;
+  const s = SALOVOTLAR[id];
+  document.getElementById('targetModalTitle').textContent = '«'+s.name+'» — нечта айтмоқчисиз?';
+  const lastTarget = lsGet(salovotTargetKey(id), '');
+  const input = document.getElementById('targetInput');
+  input.value = lastTarget || '';
+  document.querySelectorAll('#targetPresets button').forEach(b=>{
+    b.classList.toggle('sel', lastTarget && b.dataset.v === lastTarget);
+  });
+  document.getElementById('targetModalBackdrop').classList.add('show');
+  input.focus();
+}
+function hideTargetModal(){
+  document.getElementById('targetModalBackdrop').classList.remove('show');
+}
+
+document.getElementById('targetPresets').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  document.getElementById('targetInput').value = btn.dataset.v;
+  document.querySelectorAll('#targetPresets button').forEach(b=> b.classList.toggle('sel', b===btn));
+});
+document.getElementById('targetCancelBtn').addEventListener('click', hideTargetModal);
+document.getElementById('targetStartBtn').addEventListener('click', ()=>{
+  const v = parseInt(document.getElementById('targetInput').value, 10);
+  if(!v || v <= 0){ showToast('Илтимос, тўғри сон киритинг.'); return; }
+  lsSet(salovotTargetKey(activeSalovotId), String(v));
+  lsSet(salovotCountKey(activeSalovotId), '0');
+  hideTargetModal();
+  renderSalovotCounter();
+});
+
+function renderSalovotCounter(){
+  const id = activeSalovotId;
+  const s = SALOVOTLAR[id];
+  const target = parseInt(lsGet(salovotTargetKey(id), '0'), 10);
+  const count = parseInt(lsGet(salovotCountKey(id), '0'), 10);
+  const cycles = lsGet(salovotCyclesKey(id), '0');
+
+  appEl.innerHTML = `
+    <div class="backbar">
+      <button class="btn-back" id="btnSalovotBack">← Саловотлар</button>
+      <div class="active-sname">${s.name}</div>
+    </div>
+    <div class="tasbih-wrap">
+      <div class="tasbih-arabic">${s.arabic}</div>
+      <div class="tasbih-cyr">${s.name}</div>
+
+      <div class="tasbih-btn" id="tasbihBtn">
+        <div class="tasbih-count-big" id="tasbihCount">${count}</div>
+        <div style="font-size:.75rem;opacity:.85;">босинг</div>
+      </div>
+
+      <div class="tasbih-stats">
+        <div>Айтилди: <b id="statSaid">${count}</b></div>
+        <div>Қолди: <b id="statLeft">${Math.max(target-count,0)}</b></div>
+      </div>
+
+      <div class="tasbih-actions">
+        <button class="btn-minus" id="tasbihMinus">−1</button>
+        <button class="btn-target" id="tasbihTarget">🎯 Мақсадни ўзгартириш</button>
+        <button class="btn-reset-tasbih" id="tasbihReset">↺ Ҳисобни бошидан бошлаш</button>
+      </div>
+      <div class="footnote" style="margin-top:16px;">Жами тўлиқ якунлангани: <b>${cycles}</b> марта</div>
+    </div>
+  `;
+
+  document.getElementById('btnSalovotBack').addEventListener('click', renderSalovotMenu);
+  document.getElementById('tasbihTarget').addEventListener('click', ()=> showTargetModal(id));
+  document.getElementById('tasbihReset').addEventListener('click', ()=>{
+    lsSet(salovotCountKey(id), '0');
+    renderSalovotCounter();
+  });
+  document.getElementById('tasbihMinus').addEventListener('click', ()=> tasbihChange(-1));
+  document.getElementById('tasbihBtn').addEventListener('click', ()=> tasbihChange(1));
+}
+
+function tasbihChange(delta){
+  const id = activeSalovotId;
+  const target = parseInt(lsGet(salovotTargetKey(id), '0'), 10);
+  let count = parseInt(lsGet(salovotCountKey(id), '0'), 10) + delta;
+  if(count < 0) count = 0;
+
+  if(navigator.vibrate && delta>0){ try{ navigator.vibrate(12); }catch(e){} }
+
+  if(target>0 && count >= target){
+    lsSet(salovotCountKey(id), '0');
+    let cycles = parseInt(lsGet(salovotCyclesKey(id), '0'), 10) + 1;
+    lsSet(salovotCyclesKey(id), String(cycles));
+    showToast('Муборак бўлсин! '+target+' марта тўлиқ якунландингиз ✅');
+    renderSalovotCounter();
+    return;
+  }
+  lsSet(salovotCountKey(id), String(count));
+  document.getElementById('tasbihCount').textContent = count;
+  document.getElementById('statSaid').textContent = count;
+  document.getElementById('statLeft').textContent = Math.max(target-count, 0);
+}
+
 function openSura(id){
   activeSuraId = id;
   activeMode = 'free';
@@ -485,7 +751,7 @@ function renderReadingScreen(){
     </div>
   `;
 
-  document.getElementById('btnHome').addEventListener('click', renderHome);
+  document.getElementById('btnHome').addEventListener('click', renderSuraHome);
   document.querySelectorAll('.mode-tab').forEach(tab=>{
     tab.addEventListener('click', ()=> switchMode(tab.dataset.mode));
   });
@@ -740,7 +1006,7 @@ modalNo.addEventListener('click', ()=>{
 });
 
 /* ================= ISHGA TUSHIRISH ================= */
-renderHome();
+renderMainMenu();
 
 /* ================= PWA: SERVICE WORKER RO'YXATDAN O'TKAZISH ================= */
 if('serviceWorker' in navigator){
